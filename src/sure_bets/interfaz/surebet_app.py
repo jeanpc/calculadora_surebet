@@ -252,7 +252,7 @@ if st.button('Subir Apuesta'):
                 ganancia_neta = win_n - inver_t if isinstance(win_n, (float, int)) and isinstance(inver_t, (float, int)) else ''
                 percent_g = round((ganancia_neta / inver_t) * 100, 2) if isinstance(ganancia_neta, (float, int)) and inver_t else ''
             nueva_fila['Inver T'] = inver_t
-            nueva_fila['Win N'] = ''  # opcional: puedes dejar win_n si lo necesitas
+            nueva_fila['Win N'] = '=G2*I2'
             nueva_fila['S/ G'] = ganancia_neta
             nueva_fila['%G'] = percent_g
             SHEET_ID = '12SVwnUNClwV_hpg6V6O4hGhouq-Z9Suy2NyAmgNT2c4'  # tu sheet id
