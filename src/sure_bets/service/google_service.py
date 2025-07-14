@@ -13,17 +13,15 @@ def agregar_fila_google_sheets(sheet_id, nombre_hoja, nueva_fila, credenciales_j
     ]
     try:
         import streamlit as st
-        creds_dict = None
         if hasattr(st, "secrets") and "GOOGLE_CREDS" in st.secrets:
             import json
             creds_dict = json.loads(st.secrets["GOOGLE_CREDS"])
             creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
         else:
-            creds = Credentials.from_service_account_file(credenciales_json, scopes=scopes)
+            creds = Credentials.from_service_account_file('src/sure_bets/service/credentials.json', scopes=scopes)
         gc = gspread.authorize(creds)
     except ImportError:
-        # Si no está streamlit, usar archivo local
-        creds = Credentials.from_service_account_file(credenciales_json, scopes=scopes)
+        creds = Credentials.from_service_account_file('src/sure_bets/service/credentials.json', scopes=scopes)
         gc = gspread.authorize(creds)
 
     # Abre la hoja de cálculo y la hoja específica
