@@ -259,18 +259,23 @@ if st.button('Subir Apuesta'):
                     'https://www.googleapis.com/auth/drive'
                 ]
                 creds = None
+                # Detectar si estamos en la nube (Streamlit Cloud)
                 if hasattr(st.secrets, "gcp_service_account") and st.secrets["gcp_service_account"]:
-                    # En la nube: construir credenciales desde st.secrets
+                    # st.secrets['gcp_service_account'] puede ser un objeto tipo Config, convertir a dict plano
                     service_account_info = dict(st.secrets["gcp_service_account"])
+                    # Convertir todos los valores a str (por si acaso)
+                    service_account_info = {k: str(v) for k, v in service_account_info.items()}
                     creds = Credentials.from_service_account_info(service_account_info, scopes=scopes)
                 else:
-                    # Local: usar credentials.json
                     creds = Credentials.from_service_account_file('src/sure_bets/service/credentials.json', scopes=scopes)
                 gc = gspread.authorize(creds)
                 sh = gc.open_by_key(SHEET_ID)
                 worksheet = sh.worksheet(NOMBRE_HOJA)
-                next_row = len(worksheet.get_all_values()) + 1
-            except Exception:
+                all_values = worksheet.get_all_values()
+                next_row = len(all_values) + 1
+            except Exception as e:
+                import traceback
+                st.warning(f"No se pudo obtener la fila de Google Sheets: {e}\n{traceback.format_exc()}")
                 next_row = 2  # fallback si no se puede conectar
             nueva_fila['Inver T'] = inver_t
             nueva_fila['Win N'] = f'=ROUND(G{next_row}*I{next_row},2)'
