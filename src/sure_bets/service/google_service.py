@@ -11,18 +11,18 @@ def agregar_fila_google_sheets(sheet_id, nombre_hoja, nueva_fila, credenciales_j
         'https://www.googleapis.com/auth/spreadsheets',
         'https://www.googleapis.com/auth/drive'
     ]
+    creds = None
     try:
         import streamlit as st
-        if hasattr(st, "secrets") and "GOOGLE_CREDS" in st.secrets:
+        try:
             import json
             creds_dict = json.loads(st.secrets["GOOGLE_CREDS"])
             creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
-        else:
+        except Exception:
             creds = Credentials.from_service_account_file('src/sure_bets/service/credentials.json', scopes=scopes)
-        gc = gspread.authorize(creds)
     except ImportError:
         creds = Credentials.from_service_account_file('src/sure_bets/service/credentials.json', scopes=scopes)
-        gc = gspread.authorize(creds)
+    gc = gspread.authorize(creds)
 
     # Abre la hoja de cálculo y la hoja específica
     sh = gc.open_by_key(sheet_id)
