@@ -201,6 +201,8 @@ if st.button('Subir Apuesta'):
             teams_str = ' - '.join(teams)
             cols = ['Fecha','Teams','Casa','Mercado','NumApuestas','Evento1','Cuota1','Monto1','Total1','Evento2','Cuota2','Monto2','Total2','Evento3','Cuota3','Monto3','Total3',
                     'Inver T','Win N','S/ G','%G']
+            SHEET_ID = '12SVwnUNClwV_hpg6V6O4hGhouq-Z9Suy2NyAmgNT2c4'  # tu sheet id
+            NOMBRE_HOJA = 'Surebets-2025'  # tu hoja
             def tofloat(val):
                 try:
                     return float(val)
@@ -245,16 +247,28 @@ if st.button('Subir Apuesta'):
             # Usar los mismos valores de ganancia neta y %G que la app
             profit_percentage = st.session_state.get('profit_percentage', None)
             if profit_percentage is not None:
-                ganancia_neta = round(inver_t * profit_percentage / 100, 2)
                 percent_g = round(profit_percentage, 2)
             else:
-                win_n = cuota1 * total1 if isinstance(cuota1, (float, int)) and isinstance(total1, (float, int)) else ''
-                ganancia_neta = win_n - inver_t if isinstance(win_n, (float, int)) and isinstance(inver_t, (float, int)) else ''
-                percent_g = round((ganancia_neta / inver_t) * 100, 2) if isinstance(ganancia_neta, (float, int)) and inver_t else ''
+                percent_g = ''
+            # Calcular la fila de inserción en Google Sheets
+            try:
+                import gspread
+                from google.oauth2.service_account import Credentials
+                scopes = [
+                    'https://www.googleapis.com/auth/spreadsheets',
+                    'https://www.googleapis.com/auth/drive'
+                ]
+                creds = Credentials.from_service_account_file('src/sure_bets/service/credentials.json', scopes=scopes)
+                gc = gspread.authorize(creds)
+                sh = gc.open_by_key(SHEET_ID)
+                worksheet = sh.worksheet(NOMBRE_HOJA)
+                next_row = len(worksheet.get_all_values()) + 1
+            except Exception:
+                next_row = 2  # fallback si no se puede conectar
             nueva_fila['Inver T'] = inver_t
-            nueva_fila['Win N'] = '=G2*I2'
-            nueva_fila['S/ G'] = ganancia_neta
-            nueva_fila['%G'] = percent_g
+            nueva_fila['Win N'] = f'=ROUND(G{next_row}*I{next_row},2)'
+            nueva_fila['S/ G'] = f'=S{next_row}-R{next_row}'
+            nueva_fila['%G'] = f'=ROUND(T{next_row}/R{next_row}*100,2)'
             SHEET_ID = '12SVwnUNClwV_hpg6V6O4hGhouq-Z9Suy2NyAmgNT2c4'  # tu sheet id
             NOMBRE_HOJA = 'Surebets-2025'  # tu hoja
             agregar_fila_google_sheets(SHEET_ID, NOMBRE_HOJA, nueva_fila, credenciales_json='src/sure_bets/service/credentials.json')
