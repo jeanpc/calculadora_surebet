@@ -250,7 +250,7 @@ if st.button('Subir Apuesta'):
                 percent_g = round(profit_percentage, 2)
             else:
                 percent_g = ''
-            # Calcular la fila de inserción en Google Sheets
+            # Calcular la fila de inserción en Google Sheets (soporta local y nube)
             try:
                 import gspread
                 from google.oauth2.service_account import Credentials
@@ -258,7 +258,14 @@ if st.button('Subir Apuesta'):
                     'https://www.googleapis.com/auth/spreadsheets',
                     'https://www.googleapis.com/auth/drive'
                 ]
-                creds = Credentials.from_service_account_file('src/sure_bets/service/credentials.json', scopes=scopes)
+                creds = None
+                if hasattr(st.secrets, "gcp_service_account") and st.secrets["gcp_service_account"]:
+                    # En la nube: construir credenciales desde st.secrets
+                    service_account_info = dict(st.secrets["gcp_service_account"])
+                    creds = Credentials.from_service_account_info(service_account_info, scopes=scopes)
+                else:
+                    # Local: usar credentials.json
+                    creds = Credentials.from_service_account_file('src/sure_bets/service/credentials.json', scopes=scopes)
                 gc = gspread.authorize(creds)
                 sh = gc.open_by_key(SHEET_ID)
                 worksheet = sh.worksheet(NOMBRE_HOJA)
