@@ -15,8 +15,8 @@ def agregar_fila_google_sheets(sheet_id, nombre_hoja, nueva_fila, credenciales_j
     try:
         import streamlit as st
         try:
-            import json
-            creds_dict = json.loads(st.secrets["GOOGLE_CREDS"])
+            # Usar el bloque [gcp_service_account] de secrets.toml
+            creds_dict = dict(st.secrets["gcp_service_account"])
             creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
         except Exception:
             creds = Credentials.from_service_account_file('src/sure_bets/service/credentials.json', scopes=scopes)
