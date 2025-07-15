@@ -6,7 +6,7 @@ from sure_bets.util.calculadora_surebet import compute_surebet_two_way, compute_
 
 st.title('Calculadora de Surebet (2 y 3 vías)')
 
-linea = st.text_input('Pega una línea (puede ser del CSV o solo cuotas, ej: Inter Miami CF,Nashville SC,0.24,1.93O,4.3D,4.05D)')
+linea = st.text_input('Pega una línea (puede ser del CSV o solo cuotas, ej: 2025-07-20 2:30,Inter Miami CF,Nashville SC,0.24,1.93O,4.3D,4.05D)')
 use_max = st.checkbox('Usar límites máximos por cuota (max_a, max_b, max_c)', value=True)
 
 # Inicializar inversión total solo si no existe y no hay montos calculados
@@ -44,15 +44,20 @@ profit_percentage = None
 mensaje_resultado = ""
 
 if linea:
-    partes = [x.strip() for x in linea.split(',')]
-    # Detectar fecha en el primer campo
+    # Permitir tanto coma como tabulador como separador
+    if '\t' in linea:
+        partes = [x.strip() for x in linea.split('\t')]
+    else:
+        partes = [x.strip() for x in linea.split(',')]
+    # Detectar fecha en el primer campo (acepta formatos con o sin segundos)
     import re
     fecha = ''
-    if partes and re.match(r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}', partes[0]):
-        fecha = partes[0]
-        equipos_idx = 1
-    else:
-        equipos_idx = 0
+    equipos_idx = 0
+    if partes:
+        # Soporta: 2025-07-20 2:30 o 2025-07-20 02:30 o 2025-07-20 02:30:00
+        if re.match(r'\d{4}-\d{2}-\d{2} \d{1,2}:\d{2}(:\d{2})?$', partes[0]):
+            fecha = partes[0]
+            equipos_idx = 1
     # Equipos: los dos siguientes campos
     if len(partes) >= equipos_idx + 2:
         teams = [partes[equipos_idx], partes[equipos_idx + 1]]
