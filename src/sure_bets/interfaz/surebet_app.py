@@ -125,9 +125,10 @@ if st.button('Calcular Surebet'):
                     st.session_state['letras_casa'] = letras_casa
                     st.session_state['teams'] = teams
                     st.session_state['mercado'] = '±'
-                    ganancia_neta = round(inversion_real * profit_percentage / 100, 2)
+                    ganancia_neta = round((cuotas_inputs[0] * bet_a) - inversion_real, 2)
+                    profit_percentage_display = round((ganancia_neta / inversion_real) * 100, 2)
                     st.session_state['profit_percentage'] = profit_percentage
-                    mensaje_resultado = f"Ganancia neta: {ganancia_neta} ({profit_percentage:.2f}%)"
+                    mensaje_resultado = f"Ganancia neta: {ganancia_neta} ({profit_percentage_display:.2f}%)"
                     st.success(mensaje_resultado)
                     st.info(f"Apostar en A ({cuotas_inputs[0]}): {bet_a:.2f} | B ({cuotas_inputs[1]}): {bet_b:.2f}")
             else:
@@ -141,9 +142,10 @@ if st.button('Calcular Surebet'):
                 st.session_state['letras_casa'] = letras_casa
                 st.session_state['teams'] = teams
                 st.session_state['mercado'] = '±'
-                ganancia_neta = round(inversion_real * profit_percentage / 100, 2)
+                ganancia_neta = round((cuotas_inputs[0] * bet_a) - inversion_real, 2)
+                profit_percentage_display = round((ganancia_neta / inversion_real) * 100, 2)
                 st.session_state['profit_percentage'] = profit_percentage
-                mensaje_resultado = f"Ganancia neta: {ganancia_neta} ({profit_percentage:.2f}%)"
+                mensaje_resultado = f"Ganancia neta: {ganancia_neta} ({profit_percentage_display:.2f}%)"
                 st.success(mensaje_resultado)
                 st.info(f"Apostar en A ({cuotas_inputs[0]}): {bet_a:.2f} | B ({cuotas_inputs[1]}): {bet_b:.2f}")
         elif len(cuotas_inputs) == 3:
@@ -162,9 +164,10 @@ if st.button('Calcular Surebet'):
                     st.session_state['letras_casa'] = letras_casa
                     st.session_state['teams'] = teams
                     st.session_state['mercado'] = '1X2'
-                    ganancia_neta = round(inversion_real * profit_percentage / 100, 2)
+                    ganancia_neta = round((cuotas_inputs[0] * bet_a) - inversion_real, 2)
+                    profit_percentage_display = round((ganancia_neta / inversion_real) * 100, 2)
                     st.session_state['profit_percentage'] = profit_percentage
-                    mensaje_resultado = f"Ganancia neta: {ganancia_neta} ({profit_percentage:.2f}%)"
+                    mensaje_resultado = f"Ganancia neta: {ganancia_neta} ({profit_percentage_display:.2f}%)"
                     st.success(mensaje_resultado)
                     st.info(f"Apostar en A ({cuotas_inputs[0]}): {bet_a:.2f} | B ({cuotas_inputs[1]}): {bet_b:.2f} | C ({cuotas_inputs[2]}): {bet_c:.2f}")
             else:
@@ -178,9 +181,10 @@ if st.button('Calcular Surebet'):
                 st.session_state['letras_casa'] = letras_casa
                 st.session_state['teams'] = teams
                 st.session_state['mercado'] = '1X2'
-                ganancia_neta = round(inversion_real * profit_percentage / 100, 2)
+                ganancia_neta = round((cuotas_inputs[0] * bet_a) - inversion_real, 2)
+                profit_percentage_display = round((ganancia_neta / inversion_real) * 100, 2)
                 st.session_state['profit_percentage'] = profit_percentage
-                mensaje_resultado = f"Ganancia neta: {ganancia_neta} ({profit_percentage:.2f}%)"
+                mensaje_resultado = f"Ganancia neta: {ganancia_neta} ({profit_percentage_display:.2f}%)"
                 st.success(mensaje_resultado)
                 st.info(f"Apostar en A ({cuotas_inputs[0]}): {bet_a:.2f} | B ({cuotas_inputs[1]}): {bet_b:.2f} | C ({cuotas_inputs[2]}): {bet_c:.2f}")
         else:
@@ -204,7 +208,7 @@ if st.button('Subir Apuesta'):
         else:
             casa = ''.join(letras_casa)
             teams_str = ' - '.join(teams)
-            cols = ['Fecha','Teams','Casa','Mercado','NumApuestas','Evento1','Cuota1','Monto1','Total1','Evento2','Cuota2','Monto2','Total2','Evento3','Cuota3','Monto3','Total3',
+            cols = ['Fecha','Teams','Casa','Mercado','#Apuestas','Evento1','Cuota1','Monto1','Total1','Evento2','Cuota2','Monto2','Total2','Evento3','Cuota3','Monto3','Total3',
                     'Inver T','Win N','S/ G','%G']
             SHEET_ID = '12SVwnUNClwV_hpg6V6O4hGhouq-Z9Suy2NyAmgNT2c4'  # tu sheet id
             NOMBRE_HOJA = 'Surebets-2025'  # tu hoja
@@ -224,27 +228,24 @@ if st.button('Subir Apuesta'):
                 monto2 = ''
                 cuota3 = tofloat(cuotas[1])
                 monto3 = tofloat(bet_b) if bet_b is not None else ''
-            total1 = monto1
-            total2 = monto2
-            total3 = monto3
             nueva_fila = {
                 'Fecha': fecha,
                 'Teams': teams_str,
                 'Casa': casa,
                 'Mercado': mercado,
-                'NumApuestas': 1,
+                '#Apuestas': 1,
                 'Evento1': '1',
                 'Cuota1': cuota1,
                 'Monto1': monto1,
-                'Total1': total1,
+                'Total1': '',  # Se asignará la fórmula después
                 'Evento2': 'X',
                 'Cuota2': cuota2,
                 'Monto2': monto2,
-                'Total2': total2,
+                'Total2': '',  # Se asignará la fórmula después
                 'Evento3': '2',
                 'Cuota3': cuota3,
                 'Monto3': monto3,
-                'Total3': total3
+                'Total3': ''   # Se asignará la fórmula después
             }
             # Inver T: suma de montos (solo los que sean float/int)
             montos = [monto1, monto2, monto3]
@@ -282,7 +283,10 @@ if st.button('Subir Apuesta'):
                 import traceback
                 st.warning(f"No se pudo obtener la fila de Google Sheets: {e}\n{traceback.format_exc()}")
                 next_row = 2  # fallback si no se puede conectar
-            nueva_fila['Inver T'] = inver_t
+            nueva_fila['Total1'] = f'=E{next_row}*H{next_row}'
+            nueva_fila['Total2'] = f'=E{next_row}*L{next_row}'
+            nueva_fila['Total3'] = f'=E{next_row}*P{next_row}'
+            nueva_fila['Inver T'] = f'=I{next_row}+M{next_row}+Q{next_row}'
             nueva_fila['Win N'] = f'=ROUND(G{next_row}*I{next_row},2)'
             nueva_fila['S/ G'] = f'=S{next_row}-R{next_row}'
             nueva_fila['%G'] = f'=ROUND(T{next_row}/R{next_row}*100,2)'
