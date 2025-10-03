@@ -112,13 +112,14 @@ if use_max:
         with cols_max[2]:
             max_c_input = st.number_input('Máx 2', min_value=0.0, value=st.session_state['max_c_val'], step=1.0, key='max_c_key')
             
-        # Detectar cambios y aplicar exclusión mutua
+        # Detectar cambios y aplicar exclusión mutua SIN rerun para evitar bucles
+        cambio_detectado = False
         if max_a_input != st.session_state['max_a_val']:
             if max_a_input > 0:
                 st.session_state['max_a_val'] = max_a_input
                 st.session_state['max_b_val'] = 0.0
                 st.session_state['max_c_val'] = 0.0
-                st.rerun()
+                cambio_detectado = True
             else:
                 st.session_state['max_a_val'] = 0.0
         elif max_b_input != st.session_state['max_b_val']:
@@ -126,7 +127,7 @@ if use_max:
                 st.session_state['max_a_val'] = 0.0
                 st.session_state['max_b_val'] = max_b_input
                 st.session_state['max_c_val'] = 0.0
-                st.rerun()
+                cambio_detectado = True
             else:
                 st.session_state['max_b_val'] = 0.0
         elif max_c_input != st.session_state['max_c_val']:
@@ -134,9 +135,13 @@ if use_max:
                 st.session_state['max_a_val'] = 0.0
                 st.session_state['max_b_val'] = 0.0
                 st.session_state['max_c_val'] = max_c_input
-                st.rerun()
+                cambio_detectado = True
             else:
                 st.session_state['max_c_val'] = 0.0
+        
+        # Guardar si hay cambio para mostrarlo después
+        if cambio_detectado:
+            st.session_state['mensaje_exclusion'] = "💡 Los montos se refrescarán."
         
         max_a = st.session_state['max_a_val'] if st.session_state['max_a_val'] > 0 else None
         max_b = st.session_state['max_b_val'] if st.session_state['max_b_val'] > 0 else None
@@ -151,26 +156,64 @@ if use_max:
         with cols_max[1]:
             max_b_input = st.number_input('Máx 2', min_value=0.0, value=st.session_state['max_b_val'], step=1.0, key='max_b_key')
             
-        # Detectar cambios para 2 vías
+        # Detectar cambios para 2 vías SIN rerun
+        cambio_detectado = False
         if max_a_input != st.session_state['max_a_val']:
             if max_a_input > 0:
                 st.session_state['max_a_val'] = max_a_input
                 st.session_state['max_b_val'] = 0.0
-                st.rerun()
+                cambio_detectado = True
             else:
                 st.session_state['max_a_val'] = 0.0
         elif max_b_input != st.session_state['max_b_val']:
             if max_b_input > 0:
                 st.session_state['max_a_val'] = 0.0
                 st.session_state['max_b_val'] = max_b_input
-                st.rerun()
+                cambio_detectado = True
             else:
                 st.session_state['max_b_val'] = 0.0
+        
+        # Guardar si hay cambio para mostrarlo después
+        if cambio_detectado:
+            st.session_state['mensaje_exclusion'] = "💡 Se ha seleccionado un monto máximo. El otro campo se ha limpiado automáticamente."
         
         max_a = st.session_state['max_a_val'] if st.session_state['max_a_val'] > 0 else None
         max_b = st.session_state['max_b_val'] if st.session_state['max_b_val'] > 0 else None
 
-if st.button('Calcular Surebet'):
+# Crear columnas para el botón y el mensaje
+col_boton, col_mensaje = st.columns([1, 2])
+
+with col_boton:
+    calcular_clicked = st.button('Calcular Surebet')
+
+with col_mensaje:
+    # Mostrar mensaje de exclusión mutua si existe con la misma altura que el botón
+    if 'mensaje_exclusion' in st.session_state and st.session_state['mensaje_exclusion']:
+        # Usar markdown con estilo compacto y colores acordes al tema oscuro
+        st.markdown(
+            f"""
+            <div style="
+                display: flex; 
+                align-items: center; 
+                height: 38px; 
+                background-color: #262730; 
+                border: 1px solid #454545; 
+                border-radius: 6px; 
+                padding: 0 12px; 
+                margin-top: 0;
+                font-size: 14px;
+                color: #fafafa;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            ">
+                {st.session_state['mensaje_exclusion']}
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        # Limpiar el mensaje después de mostrarlo
+        st.session_state['mensaje_exclusion'] = ""
+
+if calcular_clicked:
     try:
         if len(cuotas_inputs) == 2:
             if use_max:
