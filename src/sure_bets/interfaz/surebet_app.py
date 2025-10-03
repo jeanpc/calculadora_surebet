@@ -91,78 +91,84 @@ if st.session_state['cuota_1'] or st.session_state['cuota_2'] or st.session_stat
 
 # Agrupar montos máximos si se usan
 if use_max:
-    st.markdown('**Montos máximos**')
+    st.markdown('**Montos máximos (solo un valor por vez)**')
     
-    # Inicializar valores en session_state para control mutuo exclusivo
-    if 'max_a_value' not in st.session_state:
-        st.session_state['max_a_value'] = 0.0
-    if 'max_b_value' not in st.session_state:
-        st.session_state['max_b_value'] = 0.0
-    if 'max_c_value' not in st.session_state:
-        st.session_state['max_c_value'] = 0.0
+    # Inicializar valores en session_state
+    if 'max_a_val' not in st.session_state:
+        st.session_state['max_a_val'] = 0.0
+    if 'max_b_val' not in st.session_state:
+        st.session_state['max_b_val'] = 0.0  
+    if 'max_c_val' not in st.session_state:
+        st.session_state['max_c_val'] = 0.0
     
     if st.session_state['cuota_x'] > 0:
         cols_max = st.columns(3)
         
-        # Crear inputs y detectar cambios
+        # Crear los inputs con valores del session_state
         with cols_max[0]:
-            new_max_a = st.number_input('Máx 1', min_value=0.0, value=st.session_state['max_a_value'], step=1.0, key='input_max_a')
+            max_a_input = st.number_input('Máx 1', min_value=0.0, value=st.session_state['max_a_val'], step=1.0, key='max_a_key')
         with cols_max[1]:
-            new_max_b = st.number_input('Máx X', min_value=0.0, value=st.session_state['max_b_value'], step=1.0, key='input_max_b')
+            max_b_input = st.number_input('Máx X', min_value=0.0, value=st.session_state['max_b_val'], step=1.0, key='max_b_key')
         with cols_max[2]:
-            new_max_c = st.number_input('Máx 2', min_value=0.0, value=st.session_state['max_c_value'], step=1.0, key='input_max_c')
+            max_c_input = st.number_input('Máx 2', min_value=0.0, value=st.session_state['max_c_val'], step=1.0, key='max_c_key')
+            
+        # Detectar cambios y aplicar exclusión mutua
+        if max_a_input != st.session_state['max_a_val']:
+            if max_a_input > 0:
+                st.session_state['max_a_val'] = max_a_input
+                st.session_state['max_b_val'] = 0.0
+                st.session_state['max_c_val'] = 0.0
+                st.rerun()
+            else:
+                st.session_state['max_a_val'] = 0.0
+        elif max_b_input != st.session_state['max_b_val']:
+            if max_b_input > 0:
+                st.session_state['max_a_val'] = 0.0
+                st.session_state['max_b_val'] = max_b_input
+                st.session_state['max_c_val'] = 0.0
+                st.rerun()
+            else:
+                st.session_state['max_b_val'] = 0.0
+        elif max_c_input != st.session_state['max_c_val']:
+            if max_c_input > 0:
+                st.session_state['max_a_val'] = 0.0
+                st.session_state['max_b_val'] = 0.0
+                st.session_state['max_c_val'] = max_c_input
+                st.rerun()
+            else:
+                st.session_state['max_c_val'] = 0.0
         
-        # Lógica de exclusión mutua
-        if new_max_a != st.session_state['max_a_value'] and new_max_a > 0:
-            st.session_state['max_a_value'] = new_max_a
-            st.session_state['max_b_value'] = 0.0
-            st.session_state['max_c_value'] = 0.0
-            st.rerun()
-        elif new_max_b != st.session_state['max_b_value'] and new_max_b > 0:
-            st.session_state['max_a_value'] = 0.0
-            st.session_state['max_b_value'] = new_max_b
-            st.session_state['max_c_value'] = 0.0
-            st.rerun()
-        elif new_max_c != st.session_state['max_c_value'] and new_max_c > 0:
-            st.session_state['max_a_value'] = 0.0
-            st.session_state['max_b_value'] = 0.0
-            st.session_state['max_c_value'] = new_max_c
-            st.rerun()
-        elif new_max_a == 0 and new_max_a != st.session_state['max_a_value']:
-            st.session_state['max_a_value'] = 0.0
-        elif new_max_b == 0 and new_max_b != st.session_state['max_b_value']:
-            st.session_state['max_b_value'] = 0.0
-        elif new_max_c == 0 and new_max_c != st.session_state['max_c_value']:
-            st.session_state['max_c_value'] = 0.0
+        max_a = st.session_state['max_a_val'] if st.session_state['max_a_val'] > 0 else None
+        max_b = st.session_state['max_b_val'] if st.session_state['max_b_val'] > 0 else None
+        max_c = st.session_state['max_c_val'] if st.session_state['max_c_val'] > 0 else None
         
-        max_a = st.session_state['max_a_value'] if st.session_state['max_a_value'] > 0 else None
-        max_b = st.session_state['max_b_value'] if st.session_state['max_b_value'] > 0 else None
-        max_c = st.session_state['max_c_value'] if st.session_state['max_c_value'] > 0 else None
     else:
         cols_max = st.columns(2)
         
-        # Para 2 vías (sin X)
+        # Para 2 vías
         with cols_max[0]:
-            new_max_a = st.number_input('Máx 1', min_value=0.0, value=st.session_state['max_a_value'], step=1.0, key='input_max_a')
+            max_a_input = st.number_input('Máx 1', min_value=0.0, value=st.session_state['max_a_val'], step=1.0, key='max_a_key')
         with cols_max[1]:
-            new_max_b = st.number_input('Máx 2', min_value=0.0, value=st.session_state['max_b_value'], step=1.0, key='input_max_b')
+            max_b_input = st.number_input('Máx 2', min_value=0.0, value=st.session_state['max_b_val'], step=1.0, key='max_b_key')
+            
+        # Detectar cambios para 2 vías
+        if max_a_input != st.session_state['max_a_val']:
+            if max_a_input > 0:
+                st.session_state['max_a_val'] = max_a_input
+                st.session_state['max_b_val'] = 0.0
+                st.rerun()
+            else:
+                st.session_state['max_a_val'] = 0.0
+        elif max_b_input != st.session_state['max_b_val']:
+            if max_b_input > 0:
+                st.session_state['max_a_val'] = 0.0
+                st.session_state['max_b_val'] = max_b_input
+                st.rerun()
+            else:
+                st.session_state['max_b_val'] = 0.0
         
-        # Lógica de exclusión mutua para 2 vías
-        if new_max_a != st.session_state['max_a_value'] and new_max_a > 0:
-            st.session_state['max_a_value'] = new_max_a
-            st.session_state['max_b_value'] = 0.0
-            st.rerun()
-        elif new_max_b != st.session_state['max_b_value'] and new_max_b > 0:
-            st.session_state['max_a_value'] = 0.0
-            st.session_state['max_b_value'] = new_max_b
-            st.rerun()
-        elif new_max_a == 0 and new_max_a != st.session_state['max_a_value']:
-            st.session_state['max_a_value'] = 0.0
-        elif new_max_b == 0 and new_max_b != st.session_state['max_b_value']:
-            st.session_state['max_b_value'] = 0.0
-        
-        max_a = st.session_state['max_a_value'] if st.session_state['max_a_value'] > 0 else None
-        max_b = st.session_state['max_b_value'] if st.session_state['max_b_value'] > 0 else None
+        max_a = st.session_state['max_a_val'] if st.session_state['max_a_val'] > 0 else None
+        max_b = st.session_state['max_b_val'] if st.session_state['max_b_val'] > 0 else None
 
 if st.button('Calcular Surebet'):
     try:
