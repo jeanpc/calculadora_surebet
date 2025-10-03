@@ -101,47 +101,65 @@ if use_max:
     if 'max_c_val' not in st.session_state:
         st.session_state['max_c_val'] = 0.0
     
+    # Contador para forzar recreación de widgets cuando hay cambios
+    if 'max_widget_counter' not in st.session_state:
+        st.session_state['max_widget_counter'] = 0
+    
     if st.session_state['cuota_x'] > 0:
         cols_max = st.columns(3)
         
-        # Crear los inputs con valores del session_state
+        # Crear los inputs con keys únicas para forzar recreación cuando sea necesario
+        widget_suffix = f"_{st.session_state['max_widget_counter']}"
+        
         with cols_max[0]:
-            max_a_input = st.number_input('Máx 1', min_value=0.0, value=st.session_state['max_a_val'], step=1.0, key='max_a_key')
+            max_a_input = st.number_input('Máx 1', min_value=0.0, value=st.session_state['max_a_val'], step=1.0, key=f'max_a_key{widget_suffix}')
         with cols_max[1]:
-            max_b_input = st.number_input('Máx X', min_value=0.0, value=st.session_state['max_b_val'], step=1.0, key='max_b_key')
+            max_b_input = st.number_input('Máx X', min_value=0.0, value=st.session_state['max_b_val'], step=1.0, key=f'max_b_key{widget_suffix}')
         with cols_max[2]:
-            max_c_input = st.number_input('Máx 2', min_value=0.0, value=st.session_state['max_c_val'], step=1.0, key='max_c_key')
+            max_c_input = st.number_input('Máx 2', min_value=0.0, value=st.session_state['max_c_val'], step=1.0, key=f'max_c_key{widget_suffix}')
             
-        # Detectar cambios y aplicar exclusión mutua SIN rerun para evitar bucles
+        # Detectar cambios y aplicar exclusión mutua con protección anti-bucle
         cambio_detectado = False
-        if max_a_input != st.session_state['max_a_val']:
-            if max_a_input > 0:
+        rerun_flag_key = 'rerun_scheduled'
+        
+        # Solo procesar si no hay un rerun ya programado
+        if not st.session_state.get(rerun_flag_key, False):
+            if max_a_input > 0 and (st.session_state['max_b_val'] > 0 or st.session_state['max_c_val'] > 0):
                 st.session_state['max_a_val'] = max_a_input
                 st.session_state['max_b_val'] = 0.0
                 st.session_state['max_c_val'] = 0.0
+                st.session_state['max_widget_counter'] += 1
+                st.session_state[rerun_flag_key] = True
                 cambio_detectado = True
-            else:
-                st.session_state['max_a_val'] = 0.0
-        elif max_b_input != st.session_state['max_b_val']:
-            if max_b_input > 0:
+                st.rerun()
+            elif max_b_input > 0 and (st.session_state['max_a_val'] > 0 or st.session_state['max_c_val'] > 0):
                 st.session_state['max_a_val'] = 0.0
                 st.session_state['max_b_val'] = max_b_input
                 st.session_state['max_c_val'] = 0.0
+                st.session_state['max_widget_counter'] += 1
+                st.session_state[rerun_flag_key] = True
                 cambio_detectado = True
-            else:
-                st.session_state['max_b_val'] = 0.0
-        elif max_c_input != st.session_state['max_c_val']:
-            if max_c_input > 0:
+                st.rerun()
+            elif max_c_input > 0 and (st.session_state['max_a_val'] > 0 or st.session_state['max_b_val'] > 0):
                 st.session_state['max_a_val'] = 0.0
                 st.session_state['max_b_val'] = 0.0
                 st.session_state['max_c_val'] = max_c_input
+                st.session_state['max_widget_counter'] += 1
+                st.session_state[rerun_flag_key] = True
                 cambio_detectado = True
+                st.rerun()
             else:
-                st.session_state['max_c_val'] = 0.0
+                # Actualizar valores normalmente si no hay conflicto
+                st.session_state['max_a_val'] = max_a_input
+                st.session_state['max_b_val'] = max_b_input
+                st.session_state['max_c_val'] = max_c_input
+        else:
+            # Limpiar el flag después de un rerun
+            st.session_state[rerun_flag_key] = False
         
         # Guardar si hay cambio para mostrarlo después
         if cambio_detectado:
-            st.session_state['mensaje_exclusion'] = "💡 Los montos se refrescarán."
+            st.session_state['mensaje_exclusion'] = "💡 Se ha seleccionado un monto máximo. Los otros campos se han limpiado automáticamente."
         
         max_a = st.session_state['max_a_val'] if st.session_state['max_a_val'] > 0 else None
         max_b = st.session_state['max_b_val'] if st.session_state['max_b_val'] > 0 else None
@@ -150,28 +168,41 @@ if use_max:
     else:
         cols_max = st.columns(2)
         
-        # Para 2 vías
+        # Para 2 vías con keys únicas
+        widget_suffix = f"_{st.session_state['max_widget_counter']}"
+        
         with cols_max[0]:
-            max_a_input = st.number_input('Máx 1', min_value=0.0, value=st.session_state['max_a_val'], step=1.0, key='max_a_key')
+            max_a_input = st.number_input('Máx 1', min_value=0.0, value=st.session_state['max_a_val'], step=1.0, key=f'max_a_key{widget_suffix}')
         with cols_max[1]:
-            max_b_input = st.number_input('Máx 2', min_value=0.0, value=st.session_state['max_b_val'], step=1.0, key='max_b_key')
+            max_b_input = st.number_input('Máx 2', min_value=0.0, value=st.session_state['max_b_val'], step=1.0, key=f'max_b_key{widget_suffix}')
             
-        # Detectar cambios para 2 vías SIN rerun
+        # Detectar cambios para 2 vías con protección anti-bucle
         cambio_detectado = False
-        if max_a_input != st.session_state['max_a_val']:
-            if max_a_input > 0:
+        rerun_flag_key = 'rerun_scheduled'
+        
+        # Solo procesar si no hay un rerun ya programado
+        if not st.session_state.get(rerun_flag_key, False):
+            if max_a_input > 0 and st.session_state['max_b_val'] > 0:
                 st.session_state['max_a_val'] = max_a_input
                 st.session_state['max_b_val'] = 0.0
+                st.session_state['max_widget_counter'] += 1
+                st.session_state[rerun_flag_key] = True
                 cambio_detectado = True
-            else:
-                st.session_state['max_a_val'] = 0.0
-        elif max_b_input != st.session_state['max_b_val']:
-            if max_b_input > 0:
+                st.rerun()
+            elif max_b_input > 0 and st.session_state['max_a_val'] > 0:
                 st.session_state['max_a_val'] = 0.0
                 st.session_state['max_b_val'] = max_b_input
+                st.session_state['max_widget_counter'] += 1
+                st.session_state[rerun_flag_key] = True
                 cambio_detectado = True
+                st.rerun()
             else:
-                st.session_state['max_b_val'] = 0.0
+                # Actualizar valores normalmente si no hay conflicto
+                st.session_state['max_a_val'] = max_a_input
+                st.session_state['max_b_val'] = max_b_input
+        else:
+            # Limpiar el flag después de un rerun
+            st.session_state[rerun_flag_key] = False
         
         # Guardar si hay cambio para mostrarlo después
         if cambio_detectado:
