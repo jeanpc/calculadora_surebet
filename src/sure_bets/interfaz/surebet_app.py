@@ -22,7 +22,7 @@ def cargar_desde_url():
         c2 = query_params.get('C2', '')  # Puede estar vacío para 2 eventos
         c3 = query_params.get('C3', '')
         
-        # Construir línea simulando el formato de pegado
+        # Construir línea simulando el formato de pegado con cuotas y letras concatenadas
         linea_url = f"{fecha}\t{local}\t{visitante}\t{c1}"
         if c2:  # Si C2 no está vacío, es un evento de 3 vías
             linea_url += f"\t{c2}\t{c3}"
@@ -104,8 +104,8 @@ if linea:
     if len(partes) >= equipos_idx + 2:
         teams = [partes[equipos_idx], partes[equipos_idx + 1]]
     
-    # Buscar cuotas: número (con decimal) seguido de una letra (ej: 1.93O, 4.3D, 4.05B)
-    cuotas_letras = re.findall(r'(\d+\.\d+|\d+)([A-Za-z])', linea)
+    # Buscar cuotas: número (con decimal) seguido de una o más letras (ej: 1.93O, 4.3D, 3.95Ta)
+    cuotas_letras = re.findall(r'(\d+\.\d+|\d+)([A-Za-z]+)', linea)
     
     # Si no hay letras (caso de parámetros URL), buscar solo números decimales
     if not cuotas_letras:
