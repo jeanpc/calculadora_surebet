@@ -6,8 +6,48 @@ from sure_bets.util.calculadora_surebet import compute_surebet_two_way, compute_
 
 st.title('Calculadora de Surebet (2 y 3 vías)')
 
-linea = st.text_input('Pega una línea (puede ser del CSV o solo cuotas, ej: 2025-07-20 2:30,Inter Miami CF,Nashville SC,0.24,1.93O,4.3D,4.05D)')
-use_max = st.checkbox('Usar límites máximos por cuota (max_a, max_b, max_c)', value=True)
+# Manejar parámetros GET de la URL
+def cargar_desde_url():
+    """Cargar valores desde parámetros GET de la URL"""
+    query_params = st.query_params
+    linea_url = ""
+    redondeo_url = False
+    
+    # Si hay parámetros, crear una línea similar a la que se pega manualmente
+    if any(param in query_params for param in ['Fecha', 'Local', 'Visitante', 'C1', 'C2', 'C3']):
+        fecha = query_params.get('Fecha', '')
+        local = query_params.get('Local', '')
+        visitante = query_params.get('Visitante', '')
+        c1 = query_params.get('C1', '')
+        c2 = query_params.get('C2', '')  # Puede estar vacío para 2 eventos
+        c3 = query_params.get('C3', '')
+        
+        # Construir línea simulando el formato de pegado
+        linea_url = f"{fecha}\t{local}\t{visitante}\t{c1}"
+        if c2:  # Si C2 no está vacío, es un evento de 3 vías
+            linea_url += f"\t{c2}\t{c3}"
+        else:  # Si C2 está vacío, es un evento de 2 vías
+            linea_url += f"\t{c3}"
+    
+    # Obtener el parámetro de redondeo
+    if query_params:
+        redondeo_param = query_params.get('Redondeo', '').lower()
+        redondeo_url = redondeo_param == 'true'
+    
+    return linea_url, redondeo_url
+
+# Cargar línea desde URL si hay parámetros
+linea_url, redondeo_desde_url = cargar_desde_url()
+linea_default = linea_url if linea_url else ""
+
+linea = st.text_input('Pega una línea (puede ser del CSV o solo cuotas, ej: 2025-07-20 2:30,Inter Miami CF,Nashville SC,0.24,1.93O,4.3D,4.05D)', value=linea_default)
+
+# Crear columnas para los checkboxes
+cols_checkboxes = st.columns(2)
+with cols_checkboxes[0]:
+    use_max = st.checkbox('Usar montos máximos por cuota', value=True)
+with cols_checkboxes[1]:
+    redondeo_entero = st.checkbox('Redondeo a entero', value=redondeo_desde_url)
 
 # Inicializar inversión total solo si no existe y no hay montos calculados
 if 'inversion_total' not in st.session_state:
@@ -49,6 +89,7 @@ if linea:
         partes = [x.strip() for x in linea.split('\t')]
     else:
         partes = [x.strip() for x in linea.split(',')]
+    
     # Detectar fecha en el primer campo (acepta formatos con o sin segundos)
     import re
     fecha = ''
@@ -58,13 +99,31 @@ if linea:
         if re.match(r'\d{4}-\d{2}-\d{2} \d{1,2}:\d{2}(:\d{2})?$', partes[0]):
             fecha = partes[0]
             equipos_idx = 1
+    
     # Equipos: los dos siguientes campos
     if len(partes) >= equipos_idx + 2:
         teams = [partes[equipos_idx], partes[equipos_idx + 1]]
+    
     # Buscar cuotas: número (con decimal) seguido de una letra (ej: 1.93O, 4.3D, 4.05B)
     cuotas_letras = re.findall(r'(\d+\.\d+|\d+)([A-Za-z])', linea)
-    cuotas = [float(c[0]) for c in cuotas_letras[:3]]
-    letras_casa = [c[1] for c in cuotas_letras[:3]]
+    
+    # Si no hay letras (caso de parámetros URL), buscar solo números decimales
+    if not cuotas_letras:
+        # Buscar números decimales simples desde el índice después de los equipos
+        cuotas_texto = partes[equipos_idx + 2:] if len(partes) > equipos_idx + 2 else []
+        cuotas_numeros = []
+        for cuota_str in cuotas_texto:
+            try:
+                cuota_val = float(cuota_str)
+                cuotas_numeros.append(cuota_val)
+            except ValueError:
+                continue
+        cuotas = cuotas_numeros[:3]  # Máximo 3 cuotas
+        letras_casa = ['A', 'B', 'C'][:len(cuotas)]  # Letras por defecto
+    else:
+        cuotas = [float(c[0]) for c in cuotas_letras[:3]]
+        letras_casa = [c[1] for c in cuotas_letras[:3]]
+    
     # Rellenar los campos editables
     if len(cuotas) == 2:
         st.session_state['cuota_1'] = cuotas[0]
@@ -95,7 +154,7 @@ if use_max:
     
     # Inicializar valores en session_state
     if 'max_a_val' not in st.session_state:
-        st.session_state['max_a_val'] = 0.0
+        st.session_state['max_a_val'] = 100.0  # Valor por defecto para Máx 1
     if 'max_b_val' not in st.session_state:
         st.session_state['max_b_val'] = 0.0  
     if 'max_c_val' not in st.session_state:
@@ -246,6 +305,13 @@ with col_mensaje:
 
 if calcular_clicked:
     try:
+        # Función para formatear montos según el checkbox de redondeo
+        def formatear_monto(monto):
+            if redondeo_entero:
+                return f"{int(round(monto))}"
+            else:
+                return f"{monto:.2f}"
+        
         if len(cuotas_inputs) == 2:
             if use_max:
                 if not (max_a or max_b):
@@ -267,7 +333,7 @@ if calcular_clicked:
                     st.session_state['profit_percentage'] = profit_percentage
                     mensaje_resultado = f"Ganancia neta: {ganancia_neta} ({profit_percentage_display:.2f}%)"
                     st.success(mensaje_resultado)
-                    st.info(f"Apostar en A ({cuotas_inputs[0]}): {bet_a:.2f} | B ({cuotas_inputs[1]}): {bet_b:.2f}")
+                    st.info(f"Apostar en A ({cuotas_inputs[0]}): {formatear_monto(bet_a)} | B ({cuotas_inputs[1]}): {formatear_monto(bet_b)}")
             else:
                 profit_percentage, bet_a, bet_b = compute_surebet_two_way(cuotas_inputs[0], cuotas_inputs[1], investment)
                 inversion_real = investment
@@ -284,7 +350,7 @@ if calcular_clicked:
                 st.session_state['profit_percentage'] = profit_percentage
                 mensaje_resultado = f"Ganancia neta: {ganancia_neta} ({profit_percentage_display:.2f}%)"
                 st.success(mensaje_resultado)
-                st.info(f"Apostar en A ({cuotas_inputs[0]}): {bet_a:.2f} | B ({cuotas_inputs[1]}): {bet_b:.2f}")
+                st.info(f"Apostar en A ({cuotas_inputs[0]}): {formatear_monto(bet_a)} | B ({cuotas_inputs[1]}): {formatear_monto(bet_b)}")
         elif len(cuotas_inputs) == 3:
             if use_max:
                 if not (max_a or max_b or max_c):
@@ -306,7 +372,7 @@ if calcular_clicked:
                     st.session_state['profit_percentage'] = profit_percentage
                     mensaje_resultado = f"Ganancia neta: {ganancia_neta} ({profit_percentage_display:.2f}%)"
                     st.success(mensaje_resultado)
-                    st.info(f"Apostar en A ({cuotas_inputs[0]}): {bet_a:.2f} | B ({cuotas_inputs[1]}): {bet_b:.2f} | C ({cuotas_inputs[2]}): {bet_c:.2f}")
+                    st.info(f"Apostar en A ({cuotas_inputs[0]}): {formatear_monto(bet_a)} | B ({cuotas_inputs[1]}): {formatear_monto(bet_b)} | C ({cuotas_inputs[2]}): {formatear_monto(bet_c)}")
             else:
                 profit_percentage, bet_a, bet_b, bet_c = compute_surebet_three_way(cuotas_inputs[0], cuotas_inputs[1], cuotas_inputs[2], investment)
                 inversion_real = investment
@@ -323,7 +389,7 @@ if calcular_clicked:
                 st.session_state['profit_percentage'] = profit_percentage
                 mensaje_resultado = f"Ganancia neta: {ganancia_neta} ({profit_percentage_display:.2f}%)"
                 st.success(mensaje_resultado)
-                st.info(f"Apostar en A ({cuotas_inputs[0]}): {bet_a:.2f} | B ({cuotas_inputs[1]}): {bet_b:.2f} | C ({cuotas_inputs[2]}): {bet_c:.2f}")
+                st.info(f"Apostar en A ({cuotas_inputs[0]}): {formatear_monto(bet_a)} | B ({cuotas_inputs[1]}): {formatear_monto(bet_b)} | C ({cuotas_inputs[2]}): {formatear_monto(bet_c)}")
         else:
             st.error('No se detectaron 2 o 3 cuotas válidas en la línea.')
     except Exception as e:
