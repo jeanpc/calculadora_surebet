@@ -90,13 +90,17 @@ if linea:
     else:
         partes = [x.strip() for x in linea.split(',')]
     
-    # Detectar fecha en el primer campo (acepta formatos con o sin segundos)
+    # Detectar fecha en el primer campo (acepta múltiples formatos)
     import re
     fecha = ''
     equipos_idx = 0
     if partes:
         # Soporta: 2025-07-20 2:30 o 2025-07-20 02:30 o 2025-07-20 02:30:00
         if re.match(r'\d{4}-\d{2}-\d{2} \d{1,2}:\d{2}(:\d{2})?$', partes[0]):
+            fecha = partes[0]
+            equipos_idx = 1
+        # También soporta: DD/MM/YY HH:MM - Texto adicional
+        elif re.match(r'\d{1,2}/\d{1,2}/\d{2,4} \d{1,2}:\d{2}', partes[0]):
             fecha = partes[0]
             equipos_idx = 1
     
