@@ -108,8 +108,10 @@ if linea:
     if len(partes) >= equipos_idx + 2:
         teams = [partes[equipos_idx], partes[equipos_idx + 1]]
     
-    # Buscar cuotas: número (con decimal) seguido de una o más letras (ej: 1.93O, 4.3D, 3.95Ta)
-    cuotas_letras = re.findall(r'(\d+\.\d+|\d+)([A-Za-z]+)', linea)
+    # Buscar cuotas solo en la parte después de los equipos para evitar confusión con nombres como "1win"
+    partes_cuotas = partes[equipos_idx + 2:] if len(partes) > equipos_idx + 2 else []
+    linea_cuotas = '\t'.join(partes_cuotas)  # Solo la parte con cuotas
+    cuotas_letras = re.findall(r'(\d+\.\d+|\d+)([A-Za-z]+)', linea_cuotas)
     
     # Si no hay letras (caso de parámetros URL), buscar solo números decimales
     if not cuotas_letras:
