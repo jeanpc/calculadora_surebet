@@ -144,23 +144,14 @@ if st.session_state['cuota_1'] or st.session_state['cuota_2'] or st.session_stat
     st.markdown('**Cuotas**')
     if st.session_state['cuota_x'] > 0:
         cols = st.columns(3)
-        # Asegurar que los valores sean al menos 1.01 para evitar error
-        valor_cuota_1 = max(float(st.session_state['cuota_1']), 1.01)
-        valor_cuota_x = max(float(st.session_state['cuota_x']), 1.01)
-        valor_cuota_2 = max(float(st.session_state['cuota_2']), 1.01)
-        
-        cuota_1 = cols[0].number_input('1', min_value=1.01, value=valor_cuota_1, step=0.01, key='input_cuota_1')
-        cuota_x = cols[1].number_input('X', min_value=1.01, value=valor_cuota_x, step=0.01, key='input_cuota_x')
-        cuota_2 = cols[2].number_input('2', min_value=1.01, value=valor_cuota_2, step=0.01, key='input_cuota_2')
+        cuota_1 = cols[0].number_input('1', min_value=1.01, value=float(st.session_state['cuota_1']), step=0.01, key='input_cuota_1')
+        cuota_x = cols[1].number_input('X', min_value=1.01, value=float(st.session_state['cuota_x']), step=0.01, key='input_cuota_x')
+        cuota_2 = cols[2].number_input('2', min_value=1.01, value=float(st.session_state['cuota_2']), step=0.01, key='input_cuota_2')
         cuotas_inputs = [cuota_1, cuota_x, cuota_2]
     else:
         cols = st.columns(2)
-        # Asegurar que los valores sean al menos 1.01 para evitar error
-        valor_cuota_1 = max(float(st.session_state['cuota_1']), 1.01)
-        valor_cuota_2 = max(float(st.session_state['cuota_2']), 1.01)
-        
-        cuota_1 = cols[0].number_input('1', min_value=1.01, value=valor_cuota_1, step=0.01, key='input_cuota_1')
-        cuota_2 = cols[1].number_input('2', min_value=1.01, value=valor_cuota_2, step=0.01, key='input_cuota_2')
+        cuota_1 = cols[0].number_input('1', min_value=1.01, value=float(st.session_state['cuota_1']), step=0.01, key='input_cuota_1')
+        cuota_2 = cols[1].number_input('2', min_value=1.01, value=float(st.session_state['cuota_2']), step=0.01, key='input_cuota_2')
         cuotas_inputs = [cuota_1, cuota_2]
 
 # Agrupar montos máximos si se usan
