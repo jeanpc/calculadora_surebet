@@ -2,6 +2,7 @@
 import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 import streamlit as st
+from datetime import datetime
 from sure_bets.util.calculadora_surebet import compute_surebet_two_way, compute_surebet_three_way, compute_surebet_two_way_with_max, compute_surebet_three_way_with_max
 
 st.title('Calculadora de Surebet (2 y 3 vías)')
@@ -437,8 +438,7 @@ if st.button('Subir Apuesta'):
                 monto2 = ''
                 cuota3 = tofloat(cuotas[1])
                 monto3 = tofloat(bet_b) if bet_b is not None else ''
-            nueva_fila = {
-                'Fecha': fecha,
+            nueva_fila = {                
                 'Teams': teams_str,
                 'Casa': casa,
                 'Mercado': mercado,
@@ -454,7 +454,9 @@ if st.button('Subir Apuesta'):
                 'Evento3': '2',
                 'Cuota3': cuota3,
                 'Monto3': monto3,
-                'Total3': ''   # Se asignará la fórmula después
+                'Total3': '',   # Se asignará la fórmula después
+                'FechaEvento': fecha,
+                'FechaRegistro': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             }
             # Inver T: suma de montos (solo los que sean float/int)
             montos = [monto1, monto2, monto3]
