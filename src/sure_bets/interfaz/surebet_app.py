@@ -418,7 +418,7 @@ if st.button('Subir Apuesta'):
         else:
             casa = ''.join(letras_casa)
             teams_str = ' - '.join(teams)
-            cols = ['Fecha','Teams','Casa','Mercado','#Apuestas','Evento1','Cuota1','Monto1','Total1','Evento2','Cuota2','Monto2','Total2','Evento3','Cuota3','Monto3','Total3',
+            cols = ['FechaRegistro','FechaEvento','Teams','Casa','Mercado','#Apuestas','Evento1','Cuota1','Monto1','Total1','Evento2','Cuota2','Monto2','Total2','Evento3','Cuota3','Monto3','Total3',
                     'Inver T','Win N','S/ G','%G']
             SHEET_ID = '12SVwnUNClwV_hpg6V6O4hGhouq-Z9Suy2NyAmgNT2c4'  # tu sheet id
             NOMBRE_HOJA = 'Surebets-2025'  # tu hoja
@@ -439,6 +439,8 @@ if st.button('Subir Apuesta'):
                 cuota3 = tofloat(cuotas[1])
                 monto3 = tofloat(bet_b) if bet_b is not None else ''
             nueva_fila = {                
+                'FechaRegistro': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'FechaEvento': fecha,
                 'Teams': teams_str,
                 'Casa': casa,
                 'Mercado': mercado,
@@ -454,9 +456,7 @@ if st.button('Subir Apuesta'):
                 'Evento3': '2',
                 'Cuota3': cuota3,
                 'Monto3': monto3,
-                'Total3': '',   # Se asignará la fórmula después
-                'FechaEvento': fecha,
-                'FechaRegistro': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                'Total3': ''   # Se asignará la fórmula después
             }
             # Inver T: suma de montos (solo los que sean float/int)
             montos = [monto1, monto2, monto3]
@@ -494,9 +494,9 @@ if st.button('Subir Apuesta'):
                 import traceback
                 st.warning(f"No se pudo obtener la fila de Google Sheets: {e}\n{traceback.format_exc()}")
                 next_row = 2  # fallback si no se puede conectar
-            nueva_fila['Total1'] = f'=E{next_row}*H{next_row}'
-            nueva_fila['Total2'] = f'=E{next_row}*L{next_row}'
-            nueva_fila['Total3'] = f'=E{next_row}*P{next_row}'
+            nueva_fila['Total1'] = f'=F{next_row}*H{next_row}'
+            nueva_fila['Total2'] = f'=F{next_row}*L{next_row}'
+            nueva_fila['Total3'] = f'=F{next_row}*P{next_row}'
             nueva_fila['Inver T'] = f'=I{next_row}+M{next_row}+Q{next_row}'
             nueva_fila['Win N'] = f'=ROUND(G{next_row}*I{next_row},2)'
             nueva_fila['S/ G'] = f'=S{next_row}-R{next_row}'
