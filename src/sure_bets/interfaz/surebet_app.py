@@ -3,6 +3,7 @@ import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 import streamlit as st
 from datetime import datetime
+import pytz
 from sure_bets.util.calculadora_surebet import compute_surebet_two_way, compute_surebet_three_way, compute_surebet_two_way_with_max, compute_surebet_three_way_with_max
 
 st.title('Calculadora de Surebet (2 y 3 vías)')
@@ -438,8 +439,10 @@ if st.button('Subir Apuesta'):
                 monto2 = ''
                 cuota3 = tofloat(cuotas[1])
                 monto3 = tofloat(bet_b) if bet_b is not None else ''
+            lima_tz = pytz.timezone('America/Lima')
+            fecha_registro_lima = datetime.now(lima_tz).strftime('%Y-%m-%d %H:%M:%S')
             nueva_fila = {                
-                'FechaRegistro': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'FechaRegistro': fecha_registro_lima,
                 'FechaEvento': fecha,
                 'Teams': teams_str,
                 'Casa': casa,
