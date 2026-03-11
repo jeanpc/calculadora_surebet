@@ -497,13 +497,13 @@ if st.button('Subir Apuesta'):
                 import traceback
                 st.warning(f"No se pudo obtener la fila de Google Sheets: {e}\n{traceback.format_exc()}")
                 next_row = 2  # fallback si no se puede conectar
-            nueva_fila['Total1'] = f'=F{next_row}*H{next_row}'
-            nueva_fila['Total2'] = f'=F{next_row}*L{next_row}'
-            nueva_fila['Total3'] = f'=F{next_row}*P{next_row}'
-            nueva_fila['Inver T'] = f'=I{next_row}+M{next_row}+Q{next_row}'
-            nueva_fila['Win N'] = f'=ROUND(G{next_row}*I{next_row},2)'
-            nueva_fila['S/ G'] = f'=S{next_row}-R{next_row}'
-            nueva_fila['%G'] = f'=ROUND(T{next_row}/R{next_row}*100,2)'
+            nueva_fila['Total1'] = f'=F{next_row}*I{next_row}'
+            nueva_fila['Total2'] = f'=F{next_row}*M{next_row}'
+            nueva_fila['Total3'] = f'=F{next_row}*Q{next_row}'
+            nueva_fila['Inver T'] = f'=J{next_row}+N{next_row}+R{next_row}'
+            nueva_fila['Win N'] = f'=ROUND(H{next_row}*J{next_row},2)'
+            nueva_fila['S/ G'] = f'=T{next_row}-S{next_row}'
+            nueva_fila['%G'] = f'=ROUND(U{next_row}/S{next_row}*100,2)'
             SHEET_ID = '12SVwnUNClwV_hpg6V6O4hGhouq-Z9Suy2NyAmgNT2c4'  # tu sheet id
             NOMBRE_HOJA = 'Surebets-2025'  # tu hoja
             agregar_fila_google_sheets(SHEET_ID, NOMBRE_HOJA, nueva_fila, credenciales_json='src/sure_bets/service/credentials.json')
