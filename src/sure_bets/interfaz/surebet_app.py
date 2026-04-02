@@ -32,9 +32,9 @@ def cargar_desde_url():
         else:  # Si C2 está vacío, es un evento de 2 vías
             linea_url += f"\t{c3}"
 
-    # Leer el parámetro Mercado (singular) como se hace para los otros params
-    if 'Mercado' in query_params or 'Mercados' in query_params:
-        mercado_raw = query_params.get('Mercado', query_params.get('Mercados', ''))
+    # Leer el parámetro Mercado (singular)
+    if 'Mercado' in query_params:
+        mercado_raw = query_params.get('Mercado', '')
         if isinstance(mercado_raw, list):
             mercado_raw = mercado_raw[0] if mercado_raw else ''
         mercado_param = str(mercado_raw).strip()
