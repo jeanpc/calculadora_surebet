@@ -14,7 +14,8 @@ def cargar_desde_url():
     query_params = st.query_params
     linea_url = ""
     redondeo_url = False
-    
+    mercado_param = ''
+
     # Si hay parámetros, crear una línea similar a la que se pega manualmente
     if any(param in query_params for param in ['Fecha', 'Local', 'Visitante', 'C1', 'C2', 'C3']):
         fecha = query_params.get('Fecha', '')
@@ -23,26 +24,36 @@ def cargar_desde_url():
         c1 = query_params.get('C1', '')
         c2 = query_params.get('C2', '')  # Puede estar vacío para 2 eventos
         c3 = query_params.get('C3', '')
-        
+
         # Construir línea simulando el formato de pegado con cuotas y letras concatenadas
         linea_url = f"{fecha}\t{local}\t{visitante}\t{c1}"
         if c2:  # Si C2 no está vacío, es un evento de 3 vías
             linea_url += f"\t{c2}\t{c3}"
         else:  # Si C2 está vacío, es un evento de 2 vías
             linea_url += f"\t{c3}"
-    
+
+    # Leer el parámetro Mercado (singular) como se hace para los otros params
+    if 'Mercado' in query_params or 'Mercados' in query_params:
+        mercado_raw = query_params.get('Mercado', query_params.get('Mercados', ''))
+        if isinstance(mercado_raw, list):
+            mercado_raw = mercado_raw[0] if mercado_raw else ''
+        mercado_param = str(mercado_raw).strip()
+
     # Obtener el parámetro de redondeo
     if query_params:
         redondeo_param = query_params.get('Redondeo', '').lower()
         redondeo_url = redondeo_param == 'true'
-    
-    return linea_url, redondeo_url
+
+    return linea_url, redondeo_url, mercado_param
 
 # Cargar línea desde URL si hay parámetros
-linea_url, redondeo_desde_url = cargar_desde_url()
+linea_url, redondeo_desde_url, mercado_param_url = cargar_desde_url()
 linea_default = linea_url if linea_url else ""
 
 linea = st.text_input('Pega una línea (puede ser del CSV o solo cuotas, ej: 2025-07-20 2:30,Inter Miami CF,Nashville SC,0.24,1.93O,4.3D,4.05D)', value=linea_default)
+
+if mercado_param_url:
+    st.session_state['mercado_param'] = mercado_param_url
 
 # Crear columnas para los checkboxes
 cols_checkboxes = st.columns(2)
@@ -413,7 +424,7 @@ if st.button('Subir Apuesta'):
         bet_c = st.session_state.get('bet_c', None)
         letras_casa = st.session_state.get('letras_casa', [])
         teams = st.session_state.get('teams', [])
-        mercado = st.session_state.get('mercado', '')
+        mercado = st.session_state.get('mercado_param', '') or st.session_state.get('mercado', '')
         if len(cuotas) not in [2,3] or not teams:
             st.error('Primero ingresa una línea válida y calcula el surebet.')
         else:
