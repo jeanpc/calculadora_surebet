@@ -1,1 +1,6 @@
 src/sure_bets/service/credentials.json
+.streamlit/secrets.toml
+.venv/
+__pycache__/
+*.pyc
+.DS_Store

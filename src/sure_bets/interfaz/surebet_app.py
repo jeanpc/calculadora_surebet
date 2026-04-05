@@ -4,9 +4,110 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'
 import streamlit as st
 from datetime import datetime
 import pytz
+import re
+import io
+import pandas as pd
+from streamlit_cookies_manager import CookieManager
 from sure_bets.util.calculadora_surebet import compute_surebet_two_way, compute_surebet_three_way, compute_surebet_two_way_with_max, compute_surebet_three_way_with_max
+from sure_bets.service.auth_service import create_tables, authenticate_user, register_user, get_user_sheet_name, update_sheet_name, create_session, get_session_user, delete_session
+
+# Inicializar la base de datos de autenticación y los estados de sesión
+try:
+    create_tables()
+except Exception as e:
+    st.error('Error de conexión con la base de datos. Verifica que la variable DB_URL o st.secrets["db_url"] esté configurada correctamente.')
+    st.stop()
+
+cookies = CookieManager()
+if not cookies.ready():
+    st.stop()
+
+if 'current_user' not in st.session_state:
+    st.session_state['current_user'] = None
+if 'sheet_name' not in st.session_state:
+    st.session_state['sheet_name'] = 'Surebets-2026'
+
+if st.session_state['current_user'] is None:
+    session_token = cookies.get('sb_session') if cookies.ready() else None
+    if session_token:
+        user = get_session_user(session_token)
+        if user:
+            st.session_state['current_user'] = user['username']
+            st.session_state['sheet_name'] = user['sheet_name']
+        else:
+            if 'sb_session' in cookies:
+                del cookies['sb_session']
+                cookies.save()
+
+
+def render_authentication():
+    st.sidebar.title('Acceso')
+    auth_mode = st.sidebar.radio('¿Qué deseas hacer?', ['Ingresar', 'Registrarse'])
+    with st.sidebar.form('auth_form'):
+        username = st.text_input('Usuario', key='auth_username')
+        password = st.text_input('Contraseña', type='password', key='auth_password')
+        if auth_mode == 'Registrarse':
+            initial_sheet = st.text_input('Nombre de hoja inicial', value='Surebets-2026', key='auth_sheet_name')
+        submit = st.form_submit_button('Enviar')
+
+    if submit:
+        if not username or not password:
+            st.error('Usuario y contraseña son obligatorios.')
+            return
+        try:
+            if auth_mode == 'Ingresar':
+                if authenticate_user(username, password):
+                    st.session_state['current_user'] = username
+                    st.session_state['sheet_name'] = get_user_sheet_name(username)
+                    token = create_session(username)
+                    cookies['sb_session'] = token
+                    cookies.save()
+                    st.rerun()
+                else:
+                    st.error('Usuario o contraseña incorrectos.')
+            else:
+                sheet_name = st.session_state.get('auth_sheet_name', 'Surebets-2026')
+                register_user(username, password, sheet_name=sheet_name)
+                st.session_state['current_user'] = username
+                st.session_state['sheet_name'] = sheet_name
+                token = create_session(username)
+                cookies['sb_session'] = token
+                cookies.save()
+                st.rerun()
+        except Exception as e:
+            st.error(str(e))
+
+
+if st.session_state['current_user'] is None:
+    render_authentication()
+    st.stop()
+
+with st.sidebar:
+    st.write(f'Usuario: **{st.session_state["current_user"]}**')
+    if st.button('Cerrar sesión'):
+        session_token = cookies.get('sb_session') if cookies.ready() else None
+        if session_token:
+            delete_session(session_token)
+            del cookies['sb_session']
+            cookies.save()
+        st.session_state['current_user'] = None
+        st.session_state['sheet_name'] = 'Surebets-2026'
+        st.rerun()
 
 st.title('Calculadora de Surebet (2 y 3 vías)')
+
+st.subheader('Configuración de la hoja de Google Sheets')
+sheet_name_input = st.text_input('Nombre de la hoja donde subir registros', value=st.session_state['sheet_name'], key='sheet_name_input')
+if sheet_name_input != st.session_state['sheet_name']:
+    st.session_state['sheet_name'] = sheet_name_input
+if st.button('Guardar nombre de hoja'):
+    try:
+        sheet_name_clean = sheet_name_input.strip() or 'Surebets-2026'
+        update_sheet_name(st.session_state['current_user'], sheet_name_clean)
+        st.session_state['sheet_name'] = sheet_name_clean
+        st.success('Nombre de hoja guardado para este usuario.')
+    except Exception as e:
+        st.error(f'No se pudo guardar el nombre de hoja: {e}')
 
 # Manejar parámetros GET de la URL
 def cargar_desde_url():
@@ -85,10 +186,6 @@ if 'cuota_2' not in st.session_state:
     st.session_state['cuota_2'] = 0.0
 max_a = max_b = max_c = None
 
-import re
-import io
-import pandas as pd
-
 cuotas = []
 letras_casa = []
 teams = []
@@ -104,7 +201,6 @@ if linea:
         partes = [x.strip() for x in linea.split(',')]
     
     # Detectar fecha en el primer campo (acepta múltiples formatos)
-    import re
     fecha = ''
     equipos_idx = 0
     if partes:
@@ -433,7 +529,7 @@ if st.button('Subir Apuesta'):
             cols = ['FechaRegistro','FechaEvento','Teams','Casa','Mercado','#Apuestas','Evento1','Cuota1','Monto1','Total1','Evento2','Cuota2','Monto2','Total2','Evento3','Cuota3','Monto3','Total3',
                     'Inver T','Win N','S/ G','%G']
             SHEET_ID = '12SVwnUNClwV_hpg6V6O4hGhouq-Z9Suy2NyAmgNT2c4'  # tu sheet id
-            NOMBRE_HOJA = 'Surebets-2026'  # tu hoja
+            sheet_name = st.session_state['sheet_name']
             def tofloat(val):
                 try:
                     return float(val)
@@ -501,7 +597,7 @@ if st.button('Subir Apuesta'):
                     creds = Credentials.from_service_account_file('src/sure_bets/service/credentials.json', scopes=scopes)
                 gc = gspread.authorize(creds)
                 sh = gc.open_by_key(SHEET_ID)
-                worksheet = sh.worksheet(NOMBRE_HOJA)
+                worksheet = sh.worksheet(sheet_name)
                 all_values = worksheet.get_all_values()
                 next_row = len(all_values) + 1
             except Exception as e:
@@ -516,8 +612,7 @@ if st.button('Subir Apuesta'):
             nueva_fila['S/ G'] = f'=T{next_row}-S{next_row}'
             nueva_fila['%G'] = f'=ROUND(U{next_row}/S{next_row}*100,2)'
             SHEET_ID = '12SVwnUNClwV_hpg6V6O4hGhouq-Z9Suy2NyAmgNT2c4'  # tu sheet id
-            NOMBRE_HOJA = 'Surebets-2026'  # tu hoja
-            agregar_fila_google_sheets(SHEET_ID, NOMBRE_HOJA, nueva_fila, credenciales_json='src/sure_bets/service/credentials.json')
+            agregar_fila_google_sheets(SHEET_ID, sheet_name, nueva_fila, credenciales_json='src/sure_bets/service/credentials.json')
             st.success('¡Fila agregada a Google Sheets!')
     except Exception as e:
         st.error(f'Error al guardar en Google Sheets: {e}')
