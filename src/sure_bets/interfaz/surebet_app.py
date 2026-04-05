@@ -433,7 +433,7 @@ if st.button('Subir Apuesta'):
             cols = ['FechaRegistro','FechaEvento','Teams','Casa','Mercado','#Apuestas','Evento1','Cuota1','Monto1','Total1','Evento2','Cuota2','Monto2','Total2','Evento3','Cuota3','Monto3','Total3',
                     'Inver T','Win N','S/ G','%G']
             SHEET_ID = '12SVwnUNClwV_hpg6V6O4hGhouq-Z9Suy2NyAmgNT2c4'  # tu sheet id
-            NOMBRE_HOJA = 'Surebets-2025'  # tu hoja
+            NOMBRE_HOJA = 'Surebets-2026'  # tu hoja
             def tofloat(val):
                 try:
                     return float(val)
@@ -516,7 +516,7 @@ if st.button('Subir Apuesta'):
             nueva_fila['S/ G'] = f'=T{next_row}-S{next_row}'
             nueva_fila['%G'] = f'=ROUND(U{next_row}/S{next_row}*100,2)'
             SHEET_ID = '12SVwnUNClwV_hpg6V6O4hGhouq-Z9Suy2NyAmgNT2c4'  # tu sheet id
-            NOMBRE_HOJA = 'Surebets-2025'  # tu hoja
+            NOMBRE_HOJA = 'Surebets-2026'  # tu hoja
             agregar_fila_google_sheets(SHEET_ID, NOMBRE_HOJA, nueva_fila, credenciales_json='src/sure_bets/service/credentials.json')
             st.success('¡Fila agregada a Google Sheets!')
     except Exception as e:
