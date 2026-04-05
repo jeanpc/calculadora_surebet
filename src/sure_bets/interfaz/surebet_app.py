@@ -17,8 +17,8 @@ def cargar_desde_url():
     mercado_param = ''
 
     # Si hay parámetros, crear una línea similar a la que se pega manualmente
-    if any(param in query_params for param in ['Fecha', 'Local', 'Visitante', 'C1', 'C2', 'C3']):
-        fecha = query_params.get('Fecha', '')
+    if any(param in query_params for param in ['FechaEvento', 'Local', 'Visitante', 'C1', 'C2', 'C3']):
+        fecha = query_params.get('FechaEvento', '')
         local = query_params.get('Local', '')
         visitante = query_params.get('Visitante', '')
         c1 = query_params.get('C1', '')
