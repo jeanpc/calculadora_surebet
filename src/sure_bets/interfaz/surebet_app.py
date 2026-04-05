@@ -590,9 +590,6 @@ if st.button('Subir Apuesta'):
                 if hasattr(st.secrets, "gcp_service_account") and st.secrets["gcp_service_account"]:
                     # st.secrets['gcp_service_account'] puede ser un objeto tipo Config, convertir a dict plano
                     service_account_info = dict(st.secrets["gcp_service_account"])
-                    # TOML interpreta \n como literales, convertir a saltos reales
-                    if 'private_key' in service_account_info and isinstance(service_account_info['private_key'], str):
-                        service_account_info['private_key'] = service_account_info['private_key'].replace('\\n', '\n')
                     creds = Credentials.from_service_account_info(service_account_info, scopes=scopes)
                 else:
                     creds = Credentials.from_service_account_file('src/sure_bets/service/credentials.json', scopes=scopes)
@@ -603,19 +600,17 @@ if st.button('Subir Apuesta'):
                 next_row = len(all_values) + 1
             except Exception as e:
                 import traceback
-                st.error(f"No se pudo obtener la fila de Google Sheets: {e}")
-                next_row = None
-            
-            if next_row:
-                nueva_fila['Total1'] = f'=F{next_row}*I{next_row}'
-                nueva_fila['Total2'] = f'=F{next_row}*M{next_row}'
-                nueva_fila['Total3'] = f'=F{next_row}*Q{next_row}'
-                nueva_fila['Inver T'] = f'=J{next_row}+N{next_row}+R{next_row}'
-                nueva_fila['Win N'] = f'=ROUND(H{next_row}*J{next_row},2)'
-                nueva_fila['S/ G'] = f'=T{next_row}-S{next_row}'
-                nueva_fila['%G'] = f'=ROUND(U{next_row}/S{next_row}*100,2)'
-                SHEET_ID = '12SVwnUNClwV_hpg6V6O4hGhouq-Z9Suy2NyAmgNT2c4'  # tu sheet id
-                agregar_fila_google_sheets(SHEET_ID, sheet_name, nueva_fila, credenciales_json='src/sure_bets/service/credentials.json')
-                st.success('¡Fila agregada a Google Sheets!')
+                st.warning(f"No se pudo obtener la fila de Google Sheets: {e}\n{traceback.format_exc()}")
+                next_row = 2  # fallback si no se puede conectar
+            nueva_fila['Total1'] = f'=F{next_row}*I{next_row}'
+            nueva_fila['Total2'] = f'=F{next_row}*M{next_row}'
+            nueva_fila['Total3'] = f'=F{next_row}*Q{next_row}'
+            nueva_fila['Inver T'] = f'=J{next_row}+N{next_row}+R{next_row}'
+            nueva_fila['Win N'] = f'=ROUND(H{next_row}*J{next_row},2)'
+            nueva_fila['S/ G'] = f'=T{next_row}-S{next_row}'
+            nueva_fila['%G'] = f'=ROUND(U{next_row}/S{next_row}*100,2)'
+            SHEET_ID = '12SVwnUNClwV_hpg6V6O4hGhouq-Z9Suy2NyAmgNT2c4'  # tu sheet id
+            agregar_fila_google_sheets(SHEET_ID, sheet_name, nueva_fila, credenciales_json='src/sure_bets/service/credentials.json')
+            st.success('¡Fila agregada a Google Sheets!')
     except Exception as e:
         st.error(f'Error al guardar en Google Sheets: {e}')
