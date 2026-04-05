@@ -1,6 +1,8 @@
+import os
 import gspread
 from google.oauth2.service_account import Credentials
 import pandas as pd
+import json
 
 def agregar_fila_google_sheets(sheet_id, nombre_hoja, nueva_fila, credenciales_json='credentials.json'):
     """
@@ -17,11 +19,16 @@ def agregar_fila_google_sheets(sheet_id, nombre_hoja, nueva_fila, credenciales_j
         try:
             # Usar el bloque [gcp_service_account] de secrets.toml
             creds_dict = dict(st.secrets["gcp_service_account"])
+            # TOML interpreta \n como literales "\" + "n", convertir a saltos reales
+            if 'private_key' in creds_dict and isinstance(creds_dict['private_key'], str):
+                creds_dict['private_key'] = creds_dict['private_key'].replace('\\n', '\n')
             creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
         except Exception:
-            creds = Credentials.from_service_account_file('src/sure_bets/service/credentials.json', scopes=scopes)
+            # Fallback a archivo local
+            creds = Credentials.from_service_account_file(credenciales_json, scopes=scopes)
     except ImportError:
-        creds = Credentials.from_service_account_file('src/sure_bets/service/credentials.json', scopes=scopes)
+        # Si no está en Streamlit, usar archivo local
+        creds = Credentials.from_service_account_file(credenciales_json, scopes=scopes)
     gc = gspread.authorize(creds)
 
     # Abre la hoja de cálculo y la hoja específica
@@ -32,6 +39,7 @@ def agregar_fila_google_sheets(sheet_id, nombre_hoja, nueva_fila, credenciales_j
     headers = worksheet.row_values(1)
     # Ordena los valores según los encabezados
     row = [nueva_fila.get(col, '') for col in headers]
+
     worksheet.append_row(row, value_input_option='USER_ENTERED')
     print('¡Fila agregada a tu Google Sheet!')
 
