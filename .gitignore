@@ -4,3 +4,5 @@ src/sure_bets/service/credentials.json
 __pycache__/
 *.pyc
 .DS_Store
+secrets.toml
+token_drive.pkl

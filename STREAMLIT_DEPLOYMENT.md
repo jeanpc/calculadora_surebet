@@ -1,4 +1,4 @@
-# Guía de Despliegue en Streamlit Cloud
+﻿# Guía de Despliegue en Streamlit Cloud
 
 ## ¿Qué incluye este documento?
 Este archivo unifica la guía de despliegue, la lista de verificación y los pasos necesarios para usar la app en Streamlit Cloud con Neon y Google Sheets.
@@ -81,7 +81,25 @@ token_uri = "https://oauth2.googleapis.com/token"
 1. Crea `.streamlit/secrets.toml` localmente (no lo agregues a git)
 2. Copia el contenido de `.streamlit/secrets.toml.example`
 3. Reemplaza con tus valores reales
-4. Ejecuta:
+4. Crea y activa un entorno virtual:
+
+```bash
+# En Windows
+python -m venv venv
+venv\Scripts\activate
+
+# En Linux/Mac
+python3 -m venv venv
+source venv/bin/activate
+```
+
+5. Instala las dependencias:
+
+```bash
+pip install -r requirements.txt
+```
+
+6. Ejecuta:
 
 ```bash
 streamlit run src/sure_bets/interfaz/surebet_app.py

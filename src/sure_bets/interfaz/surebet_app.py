@@ -140,16 +140,29 @@ def cargar_desde_url():
             mercado_raw = mercado_raw[0] if mercado_raw else ''
         mercado_param = str(mercado_raw).strip()
 
-    # Obtener el parámetro de redondeo
+        # Obtener el parámetro de redondeo
     if query_params:
         redondeo_param = query_params.get('Redondeo', '').lower()
         redondeo_url = redondeo_param == 'true'
 
     return linea_url, redondeo_url, mercado_param
 
+def cargar_origen_url():
+    """Cargar el parámetro Origen de la URL"""
+    query_params = st.query_params
+    origen = query_params.get('Origen', '')
+    if isinstance(origen, list):
+        origen = origen[0] if origen else ''
+    return str(origen).strip().lower()
+
 # Cargar línea desde URL si hay parámetros
 linea_url, redondeo_desde_url, mercado_param_url = cargar_desde_url()
 linea_default = linea_url if linea_url else ""
+
+# Cargar el parámetro Origen de la URL
+origen_url = cargar_origen_url()
+if origen_url:
+    st.session_state['origen'] = origen_url
 
 linea = st.text_input('Pega una línea (puede ser del CSV o solo cuotas, ej: 2025-07-20 2:30,Inter Miami CF,Nashville SC,0.24,1.93O,4.3D,4.05D)', value=linea_default)
 
@@ -609,8 +622,8 @@ if st.button('Subir Apuesta'):
             nueva_fila['Win N'] = f'=ROUND(H{next_row}*J{next_row},2)'
             nueva_fila['S/ G'] = f'=T{next_row}-S{next_row}'
             nueva_fila['%G'] = f'=ROUND(U{next_row}/S{next_row}*100,2)'
-            SHEET_ID = '12SVwnUNClwV_hpg6V6O4hGhouq-Z9Suy2NyAmgNT2c4'  # tu sheet id
-            agregar_fila_google_sheets(SHEET_ID, sheet_name, nueva_fila, credenciales_json='src/sure_bets/service/credentials.json')
+            origen = st.session_state.get('origen', '')
+            agregar_fila_google_sheets(SHEET_ID, sheet_name, nueva_fila, credenciales_json='src/sure_bets/service/credentials.json', origen=origen)
             st.success('¡Fila agregada a Google Sheets!')
     except Exception as e:
         st.error(f'Error al guardar en Google Sheets: {e}')
