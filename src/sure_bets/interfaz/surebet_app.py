@@ -2,6 +2,9 @@
 import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 import streamlit as st
+if not hasattr(st, 'cache'):
+    st.cache = st.cache_data
+
 from datetime import datetime
 import pytz
 import re
