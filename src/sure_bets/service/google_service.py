@@ -2,11 +2,11 @@ import gspread
 from google.oauth2.service_account import Credentials
 import pandas as pd
 
-def agregar_fila_google_sheets(sheet_id, nombre_hoja, nueva_fila, credenciales_json='credentials.json', origen=''):
+def agregar_fila_google_sheets(sheet_id, nombre_hoja, nueva_fila, credenciales_json='credentials.json', tipo=''):
     """
     Agrega una fila a una hoja de cálculo de Google Sheets.
     Usa el secret de Streamlit Cloud si está disponible, o el archivo local si no.
-    Si el origen es 'middle', pinta la celda de Mercado con color verde claro 2.
+    Si el tipo es 'middle', pinta la celda de Mercado con color verde claro 2.
     """
     scopes = [
         'https://www.googleapis.com/auth/spreadsheets',
@@ -37,8 +37,8 @@ def agregar_fila_google_sheets(sheet_id, nombre_hoja, nueva_fila, credenciales_j
     # Agregar la fila
     worksheet.append_row(row, value_input_option='USER_ENTERED')
 
-    # Si el origen es 'middle', aplicar color verde claro 2 a la celda de Mercado
-    if origen == 'middle':
+    # Si el tipo es 'middle', aplicar color verde claro 2 a la celda de Mercado
+    if tipo == 'middle':
         try:
             # Encontrar el índice de la columna Mercado
             mercado_col_idx = None

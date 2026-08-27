@@ -150,22 +150,47 @@ def cargar_desde_url():
 
     return linea_url, redondeo_url, mercado_param
 
+def cargar_tipo_url():
+    """Cargar el parámetro Tipo de la URL"""
+    query_params = st.query_params
+    tipo = query_params.get('Tipo', '')
+    if isinstance(tipo, list):
+        tipo = tipo[0] if tipo else ''
+    return str(tipo).strip().lower()
+
 def cargar_origen_url():
     """Cargar el parámetro Origen de la URL"""
     query_params = st.query_params
     origen = query_params.get('Origen', '')
     if isinstance(origen, list):
         origen = origen[0] if origen else ''
-    return str(origen).strip().lower()
+    return str(origen).strip()
+
+def cargar_parametro_url(nombre):
+    """Cargar un parámetro adicional de la URL."""
+    query_params = st.query_params
+    valor = query_params.get(nombre, '')
+    if isinstance(valor, list):
+        valor = valor[0] if valor else ''
+    return str(valor).strip()
 
 # Cargar línea desde URL si hay parámetros
 linea_url, redondeo_desde_url, mercado_param_url = cargar_desde_url()
 linea_default = linea_url if linea_url else ""
 
-# Cargar el parámetro Origen de la URL
+# Cargar el parámetro Tipo de la URL
+tipo_url = cargar_tipo_url()
+if tipo_url:
+    st.session_state['tipo'] = tipo_url
 origen_url = cargar_origen_url()
 if origen_url:
     st.session_state['origen'] = origen_url
+deporte_url = cargar_parametro_url('Deporte')
+if deporte_url:
+    st.session_state['deporte'] = deporte_url
+liga_url = cargar_parametro_url('Liga')
+if liga_url:
+    st.session_state['liga'] = liga_url
 
 linea = st.text_input('Pega una línea (puede ser del CSV o solo cuotas, ej: 2025-07-20 2:30,Inter Miami CF,Nashville SC,0.24,1.93O,4.3D,4.05D)', value=linea_default)
 
@@ -542,7 +567,7 @@ if st.button('Subir Apuesta'):
         else:
             casa = ''.join(letras_casa)
             teams_str = ' - '.join(teams)
-            cols = ['FechaRegistro','FechaEvento','Teams','Casa','Mercado','#Apuestas','Evento1','Cuota1','Monto1','Total1','Evento2','Cuota2','Monto2','Total2','Evento3','Cuota3','Monto3','Total3',
+            cols = ['FechaRegistro','FechaEvento','Deporte','Liga','Teams','Casa','Mercado','#Apuestas','Evento1','Cuota1','Monto1','Total1','Evento2','Cuota2','Monto2','Total2','Evento3','Cuota3','Monto3','Total3',
                     'Inver T','Win N','S/ G','%G']
             SHEET_ID = '12SVwnUNClwV_hpg6V6O4hGhouq-Z9Suy2NyAmgNT2c4'  # tu sheet id
             sheet_name = st.session_state['sheet_name']
@@ -567,6 +592,8 @@ if st.button('Subir Apuesta'):
             nueva_fila = {                
                 'FechaRegistro': fecha_registro_lima,
                 'FechaEvento': fecha,
+                'Deporte': st.session_state.get('deporte', ''),
+                'Liga': st.session_state.get('liga', ''),
                 'Teams': teams_str,
                 'Casa': casa,
                 'Mercado': mercado,
@@ -582,7 +609,8 @@ if st.button('Subir Apuesta'):
                 'Evento3': '2',
                 'Cuota3': cuota3,
                 'Monto3': monto3,
-                'Total3': ''   # Se asignará la fórmula después
+                'Total3': '',  # Se asignará la fórmula después
+                'Origen': st.session_state.get('origen', '')
             }
             # Inver T: suma de montos (solo los que sean float/int)
             montos = [monto1, monto2, monto3]
@@ -618,15 +646,15 @@ if st.button('Subir Apuesta'):
                 import traceback
                 st.warning(f"No se pudo obtener la fila de Google Sheets: {e}\n{traceback.format_exc()}")
                 next_row = 2  # fallback si no se puede conectar
-            nueva_fila['Total1'] = f'=F{next_row}*I{next_row}'
-            nueva_fila['Total2'] = f'=F{next_row}*M{next_row}'
-            nueva_fila['Total3'] = f'=F{next_row}*Q{next_row}'
-            nueva_fila['Inver T'] = f'=J{next_row}+N{next_row}+R{next_row}'
-            nueva_fila['Win N'] = f'=ROUND(H{next_row}*J{next_row},2)'
-            nueva_fila['S/ G'] = f'=T{next_row}-S{next_row}'
-            nueva_fila['%G'] = f'=ROUND(U{next_row}/S{next_row}*100,2)'
-            origen = st.session_state.get('origen', '')
-            agregar_fila_google_sheets(SHEET_ID, sheet_name, nueva_fila, credenciales_json='src/sure_bets/service/credentials.json', origen=origen)
+            nueva_fila['Total1'] = f'=H{next_row}*K{next_row}'
+            nueva_fila['Total2'] = f'=H{next_row}*O{next_row}'
+            nueva_fila['Total3'] = f'=H{next_row}*S{next_row}'
+            nueva_fila['Inver T'] = f'=L{next_row}+P{next_row}+T{next_row}'
+            nueva_fila['Win N'] = f'=ROUND(J{next_row}*L{next_row},2)'
+            nueva_fila['S/ G'] = f'=V{next_row}-U{next_row}'
+            nueva_fila['%G'] = f'=ROUND(W{next_row}/U{next_row}*100,2)'
+            tipo = st.session_state.get('tipo', '')
+            agregar_fila_google_sheets(SHEET_ID, sheet_name, nueva_fila, credenciales_json='src/sure_bets/service/credentials.json', tipo=tipo)
             st.success('¡Fila agregada a Google Sheets!')
     except Exception as e:
         st.error(f'Error al guardar en Google Sheets: {e}')
