@@ -565,7 +565,7 @@ if st.button('Subir Apuesta'):
         if len(cuotas) not in [2,3] or not teams:
             st.error('Primero ingresa una línea válida y calcula el surebet.')
         else:
-            casa = ''.join(letras_casa)
+            casa = ','.join(letras_casa)
             teams_str = ' - '.join(teams)
             cols = ['FechaRegistro','FechaEvento','Deporte','Liga','Teams','Casa','Mercado','#Apuestas','Evento1','Cuota1','Monto1','Total1','Evento2','Cuota2','Monto2','Total2','Evento3','Cuota3','Monto3','Total3',
                     'Inver T','Win N','S/ G','%G']
